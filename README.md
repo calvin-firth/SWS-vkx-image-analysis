@@ -1,1 +1,5 @@
-So far, I have added code that finds the parameters of pyramids from a vk4/vk6 or csv files. This code is contained within the "Ablation Image Analysis" zip file. There is a more detailed README within that zip file.
+This branch contains the code with recent updates.
+
+The main updates are the inclusion of average height, and the ability to measure the offset.
+
+To use the offset measurement feature, run "Pyramid stacking with offset" rather than "Pyramid stacking".
