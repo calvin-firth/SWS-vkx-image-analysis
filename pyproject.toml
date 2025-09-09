@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SWS-vkx"  # the name people will `pip install`
+version = "0.1.0"
+description = "My shared project with multiple folders"
+authors = [
+    { name="Calvin Firth", email="calvin.firth1@gmail.com" }
+]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
