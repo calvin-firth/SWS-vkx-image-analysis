@@ -1,1 +1,3 @@
-So far, I have added code that finds the parameters of pyramids from a vk4/vk6 or csv files. This code is contained within the "Ablation Image Analysis" zip file. There is a more detailed README within that zip file.
+This branch is for making updates to the code before merging with the main branch.
+
+Currently, I am in the process of cleaning up all the code. But all of the parameter analysis, volume removal, and cumulative fluence code is here.
