@@ -1,3 +1,10 @@
+'''These functions extract the relevant data from vk4/vk6 files
+The original authors are H. Sakurai and R. Takaku from the University of Tokyo
+The code was edited and adapted for this package by Andrew Yan and Calvin Firth from the University of Minnesota (UMN)
+Last edited spring 2025
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndi
@@ -65,6 +72,7 @@ class Load_vk4Data(VK4_Lib):
         self.X, self.Y = np.meshgrid(self.y, self.x)
 
 def open_vkx(filestr):
+    # This function is written by Andrew Yan and Calvin Firth (UMN)
     f = open("temp.txt", "a+")
     f.seek(0)
     fname = filestr or f.read()
@@ -78,7 +86,6 @@ def open_vkx(filestr):
     if fname[-4:] == '.vk4':
         shape_lib = Load_vk4Data(fname)
     elif fname[-4:] == '.vk6':
-
         with ZipFile(fname, 'r') as edgar:
             fname1 = edgar.extract('Vk4File')
         shape_lib = Load_vk4Data(fname1)

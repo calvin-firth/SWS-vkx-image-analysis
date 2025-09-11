@@ -1,3 +1,8 @@
+'''Helper function to get non-pitch SWS parameters
+The input is an "image" of a single pyramid
+Written by Calvin Firth (UMN)
+Last edited fall 2025'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from plotting import line_plot

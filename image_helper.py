@@ -1,9 +1,11 @@
+'''This file contains helper functions that are used over and over again in the code in this package
+Written by Calvin Firth (UMN)
+Last edited 2024'''
+
 import astropy.modeling.fitting
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-import scipy
 from scipy.linalg import lstsq
 import Load_vk4
 import pandas
@@ -11,38 +13,40 @@ from mpl_point_clicker import clicker
 from mpl_interactions import zoom_factory, panhandler
 
 def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=False):
+    '''This function extracts the pitch from an image
+    the "target" argument is a guess for the pitch (in microns) to initialize the fitting routine.
+    If you know the pitch of your structures are far away from 300um, then change the argument.
+    xycalibration is the size of each pixel
+    '''
+
+    #Get x and y arrays in physical units
     x = np.arange(0, img.shape[1], 1)
     x_og = xycalibration * x
-    # print(x)
     y = np.arange(0, img.shape[0], 1)
     y_og = xycalibration * y
-    # print(y)
-
     x, y = np.meshgrid(x_og, y_og)
 
-    window = skimage.filters.window('hann', img.shape)
     x_fit = x.flatten()
     y_fit = y.flatten()
     z_fit = img.flatten()
     A = np.c_[x_fit, y_fit, np.ones_like(x_fit)]
     C, _, _, _ = lstsq(A, z_fit)
     detrend = C[0] * x + C[1] * y + C[2]
-    # plt.figure()
-    # plt.imshow(detrend, cmap=cm.coolwarm, interpolation='nearest')
     detrend = img - detrend
     detrend = detrend - np.mean(detrend)
-    # img = detrend
-    # plt.figure()
-    # plt.imshow(detrend,vmin = -1000, vmax=1000, cmap=cm.coolwarm, interpolation='nearest')
+
+    window = skimage.filters.window('hann', img.shape)
     data_to_ft = detrend * window
+
     padding_amty =  100
     padding_amtx =  100
     data_to_ft = np.pad(data_to_ft, (padding_amtx, padding_amty), 'constant')
 
     kx = np.fft.fftfreq(data_to_ft.shape[1], xycalibration)
     ky = np.fft.fftfreq(data_to_ft.shape[0], xycalibration)
-    kx, ky = np.meshgrid(kx, ky)
-    FT_2d = np.fft.fft2(data_to_ft)
+    kx, ky = np.meshgrid(kx, ky) # Get array of frequencies from the FT
+    FT_2d = np.fft.fft2(data_to_ft) # Fourier transform of the image data
+
     kx_q1_0 = kx[0:(int(FT_2d.shape[0] / 2))]
     ky_q1_0 = ky[0:(int(FT_2d.shape[0] / 2))]
     kx_q1 = np.zeros((FT_2d.shape[0] // 2, FT_2d.shape[1] // 2))
@@ -53,16 +57,6 @@ def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=Fal
         quad_1FT[i] = quad_1_0[i][0:quad_1FT.shape[1]]
         kx_q1[i] = kx_q1_0[i][0:quad_1FT.shape[1]]
         ky_q1[i] = ky_q1_0[i][0:quad_1FT.shape[1]]
-
-    # fig2,ax2=plt.subplots()
-    # levels = np.linspace(np.log10(np.abs(FT_2d)).min(),np.log10(np.partition((np.abs(FT_2d)).flatten(), -2)[-10]),50)
-    # print(levels)
-    # surf = ax2.contourf(kx,ky,np.log10(np.abs(FT_2d)), levels=levels,extend='both')
-    # fig2.colorbar(surf, shrink=0.5, aspect=5)
-    # ax2.view_init(90,0)
-    # plt.title("2D Fourier Transform",fontsize=24)
-    # plt.xlabel("kx (1/" + str(xy_unit) +")",fontsize=22)
-    # plt.ylabel("ky (1/" + str(xy_unit) +")",fontsize=22)
 
     max_finder = np.array(np.abs(quad_1FT))
     max_finder[0][0] = 0
@@ -142,7 +136,7 @@ def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=Fal
     gauss_x = np.linspace(kx_q1[0][lower], kx_q1[0][upper], 100)
     x_unc = (np.sqrt(np.diag(fitter.fit_info['param_cov']))[1])
 
-    # print((np.transpose(max_finder)[0])[y_m_indices[0]])
+
     modely = astropy.modeling.models.Gaussian1D((np.transpose(max_finder)[0])[y_m_indices[0]],
                                                 np.transpose(ky_q1)[0][y_m_indices[0]], ((np.transpose(ky_q1)[0][
                                                                                               uppery] -
@@ -188,27 +182,15 @@ def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=Fal
 def open_image(path):
     if (path[-3:] == "vk6" or path[-3:] == "vk4" or path == ""):
         img, xycalibration, zcalibration = Load_vk4.open_vkx(path)
-        #print(Load_vk4.get_info(path))
         xy_unit = "mm"
         z_unit = "mm"
-        '''path2 = str(input("Enter the path to your image: "))
-        if (path2[0] == "\""):
-            path2 = path2[1:]
-        if (path2[-1] == "\""):
-            path2 = path2[:-1]
-        img2 = pandas.read_csv(path2, skiprows=15, header=None)
-        img2 = img2.to_numpy()
-        plt.imshow(img2 - (1000*img))'''
 
     elif (path[-3:] == "csv"):
         # hdr = pandas.read_csv(path, nrows = 15,header=None)
         hdr1 = pandas.read_csv(path, skiprows=6, nrows=1, header=None)
         hdr2 = pandas.read_csv(path, skiprows=12, nrows=1, header=None)
-        # print(hdr1)
         xycalibration = float(hdr1.iloc[0][1])
-        # print(xycalibration)
         xy_unit = hdr1.iloc[0][2]
-        # print(xy_unit)
         z_unit = hdr2.iloc[0][1]
 
         img = pandas.read_csv(path, skiprows=15, header=None)
@@ -244,16 +226,5 @@ def partial_image(img):
     right = points.get_positions()['click'][-3]
     top = points.get_positions()['click'][-4]
 
-    '''fig2, ax2 = plt.subplots()
-    ax2.imshow(img)
-    ax2.scatter(top[0], top[1], s=20, marker='*', c='k')
-    ax2.scatter(right[0],right[1], s=20, marker='x', c='k')
-    ax2.scatter(bottom[0],bottom[1], s=20, marker='o', c='k')
-    ax2.scatter(left[0],left[1], s=20, marker='.', c='k')
-    plt.show()'''
-
     img = img[int(top[1]):int(bottom[1]), int(left[0]):int(right[0])]
-    '''plt.figure()
-    plt.imshow(img)
-    plt.show()'''
     return img

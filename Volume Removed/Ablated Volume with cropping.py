@@ -1,4 +1,8 @@
-from image_helper import open_image
+'''This code calculates the total volume removed below a user-defined reference plane
+Written by Calvin Firth
+Last updated Spring 2025'''
+
+from image_helper import open_image, partial_image
 import matplotlib.pyplot as plt
 from mpl_point_clicker import clicker
 from mpl_interactions import zoom_factory, panhandler
@@ -7,6 +11,15 @@ import numpy as np
 path = str(input("Enter the path to your image: ")).strip(' "')
 
 img, xycalibration, xy_unit, z_unit = open_image(path)
+
+partial = str(input("Do you want to crop this image? [y/n]: "))
+if(partial == "y"):
+    img = partial_image(img)
+    partial = True
+elif(partial == "n"):
+    partial = False
+else:
+    print("Invalid input. Answer \"y\" or \"n\".")
 
 fig,ax = plt.subplots()
 ax.imshow(img)

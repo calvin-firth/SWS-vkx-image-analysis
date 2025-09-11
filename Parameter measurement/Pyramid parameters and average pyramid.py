@@ -1,3 +1,9 @@
+'''The code that you run to actually get the parameters and the average pyramid
+You enter the filepath to the image you want to analyze
+Once the analysis is done, the parameters are printed out and the average pyramid is displayed
+Written by Calvin Firth (UMN)
+Last updated Fall 2025'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 from plotting import errbar
@@ -18,44 +24,53 @@ elif(partial == "n"):
 else:
     print("Invalid input. Answer \"y\" or \"n\".")
 
-fig,ax = plt.subplots()
-ax.imshow(img)
-plt.title("Ablation Image", fontsize = 24)
-plt.xlabel("x", fontsize = 22)
-plt.ylabel("y", fontsize = 22)
-plt.figtext(0.6, 0.5, "Click three points to define the reference plane for offset measurements", fontsize = 17,backgroundcolor = 'white')
-zoom_factory(ax)
-ph = panhandler(fig,button=3)
-points = clicker(ax,["click"],colors='k', disable_legend=True)
-plt.show()
+offset = str(input("Do you want the code to calculate the offset? [y/n]: "))
+if(offset == "y"):
+    offset = True
+elif(offset == "n"):
+    offset = False
+else:
+    print("Invalid input. Answer \"y\" or \"n\".")
 
-# User interface
+if offset:
+    fig,ax = plt.subplots()
+    ax.imshow(img)
+    plt.title("Ablation Image", fontsize = 24)
+    plt.xlabel("x", fontsize = 22)
+    plt.ylabel("y", fontsize = 22)
+    plt.figtext(0.6, 0.5, "Click three points to define the reference plane for offset measurements", fontsize = 17,backgroundcolor = 'white')
+    zoom_factory(ax)
+    ph = panhandler(fig,button=3)
+    points = clicker(ax,["click"],colors='k', disable_legend=True)
+    plt.show()
 
-if not points.get_positions()['click'].any():
-    print("You didn't place any points!! Try Again.")
-    quit()
+    # User interface
 
-x = np.arange(0, img.shape[1], 1)
-x_og = xycalibration * x
-y = np.arange(0, img.shape[0], 1)
-y_og = xycalibration * y
-x, y = np.meshgrid(x, y)
+    if not points.get_positions()['click'].any():
+        print("You didn't place any points!! Try Again.")
+        quit()
+
+    x = np.arange(0, img.shape[1], 1)
+    x_og = xycalibration * x
+    y = np.arange(0, img.shape[0], 1)
+    y_og = xycalibration * y
+    x, y = np.meshgrid(x, y)
 
 
-pt3 = points.get_positions()['click'][-1]
-pt2 = points.get_positions()['click'][-2]
-pt1 = points.get_positions()['click'][-3]
+    pt3 = points.get_positions()['click'][-1]
+    pt2 = points.get_positions()['click'][-2]
+    pt1 = points.get_positions()['click'][-3]
 
-pt3 = np.append(pt3, [img[int(pt3[1])][int(pt3[0])]])
-pt2 = np.append(pt2, [img[int(pt2[1])][int(pt2[0])]])
-pt1 = np.append(pt1, [img[int(pt1[1])][int(pt1[0])]])
+    pt3 = np.append(pt3, [img[int(pt3[1])][int(pt3[0])]])
+    pt2 = np.append(pt2, [img[int(pt2[1])][int(pt2[0])]])
+    pt1 = np.append(pt1, [img[int(pt1[1])][int(pt1[0])]])
 
-v1 = pt3-pt1
-v2 = pt2-pt1
-n = np.cross(v1,v2)
+    v1 = pt3-pt1
+    v2 = pt2-pt1
+    n = np.cross(v1,v2)
 
-ref_plane = -((n[0]/n[2])*x + (n[1]/n[2])*y) + ((n[0]*pt1[0])/n[2] + ((n[1]*pt1[1])/n[2]) + pt1[2])
-depth = ref_plane - img
+    ref_plane = -((n[0]/n[2])*x + (n[1]/n[2])*y) + ((n[0]*pt1[0])/n[2] + ((n[1]*pt1[1])/n[2]) + pt1[2])
+    depth = ref_plane - img
 
 #print(img.shape)
 #img = img[int(img.shape[0]*.1):int(img.shape[0]*.9),int(img.shape[1]*.1):int(img.shape[1]*.9)]
@@ -118,7 +133,8 @@ row_arr = []
 plane_row = []
 for row in range(rows):
     row_arr.append(img[(int(init[1] + (row - 1)*(py/xycalibration))):(int(init[1] + (row - 1)*(py/xycalibration) + int(py/xycalibration)))])
-    plane_row.append(ref_plane[(int(init[1] + (row - 1)*(py/xycalibration))):(int(init[1] + (row - 1)*(py/xycalibration) + int(py/xycalibration)))])
+    if offset:
+        plane_row.append(ref_plane[(int(init[1] + (row - 1)*(py/xycalibration))):(int(init[1] + (row - 1)*(py/xycalibration) + int(py/xycalibration)))])
 
 pyr_arr = []
 plane_vals = []
@@ -128,13 +144,14 @@ for row in row_arr:
     for col in range(cols):
         # split image into sub-images, append them to pyr_arr
         pyr_arr.append(np.transpose(trn[(int(init[0] + (col-1)*(px/xycalibration))):(int(init[0] + (col-1)*(px/xycalibration) + int(py/xycalibration)))]))
-        plane_vals.append(np.median(np.transpose(trn_plane[(int(init[0] + (col-1)*(px/xycalibration))):(int(init[0] + (col-1)*(px/xycalibration) + int(py/xycalibration)))])))
+        if offset:
+            plane_vals.append(np.median(np.transpose(trn_plane[(int(init[0] + (col-1)*(px/xycalibration))):(int(init[0] + (col-1)*(px/xycalibration) + int(py/xycalibration)))])))
 
 avg_params = []
 num_pyr = 0
 for pyr in pyr_arr:
     # find parameters for each pyramid
-    avg_params.append(get_params(pyr, x_og, y_og,offset = True, plane = plane_vals, num_pyr = num_pyr,plot=False))
+    avg_params.append(get_params(pyr, x_og, y_og,offset = offset, plane = plane_vals, num_pyr = num_pyr,plot=False))
     num_pyr += 1
 
 avg_pyramid = np.average(pyr_arr,axis=0)
@@ -177,11 +194,11 @@ avg_dict = {
     "wx": str(params[4]) + " +- " + str(param_unc[4]) + " " + xy_unit,
     "wy": str(params[5]) + " +- " + str(param_unc[5]) + " " + xy_unit
 }
+if offset:
+    avg_dict["Offset"] = (str(np.nanmean(plane_vals)) + " +- " + str(np.nanstd(plane_vals)) + " " + z_unit)
 
 print("Average parameters of the pyramids: ")
 print(avg_dict)
-
-print("Offset: " + str(np.nanmean(plane_vals)) + " +- " + str(np.nanstd(plane_vals)) + " " + z_unit)
 
 errbar(np.linspace(0,(xycalibration*x_cut.size),x_cut.size, endpoint=False),x_cut,x_cut_unc,"Average Pyramid x cross-section", "x (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
 errbar(np.linspace(0,(xycalibration*y_cut.size),y_cut.size, endpoint=False),y_cut,y_cut_unc,"Average Pyramid y cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")

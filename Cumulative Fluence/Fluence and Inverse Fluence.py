@@ -1,3 +1,10 @@
+'''This code calculates the cumulative fluence I(x,y) on a "unit cell"
+as a function of scan parameters by summing all the Gaussian beams
+It also has the additional capability (compared to the notebook) of comparing the fluence to the depth from a real image
+For details about the calculation, see the pdf in this directory
+Written by Calvin Firth (UMN)
+Last updated Fall 2025'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 from plotting import errbar
@@ -5,24 +12,25 @@ from mpl_point_clicker import clicker
 from mpl_interactions import zoom_factory, panhandler
 from image_helper import get_pitch, open_image
 
+def fluence_func(x,y,gw,ls,Px,Py,SS,RR,n,I_0,a): #The function that calculates the fluence
+    return n*I_0*(sum(np.where(I_0*np.exp(-2*(((x-(SS/RR)*i)**2 + (y-(j*ls + (Py-gw)/2))**2)/(a**2)))>2,(np.exp(-2*(((x-(SS/RR)*i)**2 + (y-(j*ls + (Py-gw)/2))**2)/(a**2))) - 2/I_0),0) for i in range(int(-(0.05*Px)/(SS/RR)),int((1.05*Px)/(SS/RR))+1) for j in range(int(gw/ls)+1)) + sum(np.where(I_0*np.exp(-2*(((x-(i*ls + (Px-gw)/2))**2 + (y-j*(SS/RR))**2)/a**2))>2,(np.exp(-2*(((x-(i*ls + (Px-gw)/2))**2 + (y-j*(SS/RR))**2)/a**2)) - 2/I_0),0) for i in range(int(gw/ls) + 1) for j in range(int(-(0.05*Py)/(SS/RR)),int((1.05*Py)/(SS/RR))+1)))
 
-def fluence_func(x,y,gw,ls,Px,Py,SS,RR,n,I_0,a):
-    return n*I_0*(sum([np.exp(-2*(((x-(SS/RR)*i)**2 + (y-(j*ls + (Py-gw)/2))**2)/(a**2))) for i in range(int(-(0.05*Px)/(SS/RR)),int((1.05*Px)/(SS/RR))+1) for j in range(int(gw/ls)+1)]) + sum(np.exp(-2*(((x-(i*ls + (Px-gw)/2))**2 + (y-j*(SS/RR))**2)/a**2)) for i in range(int(gw/ls) + 1) for j in range(int(-(0.05*Py)/(SS/RR)),int((1.05*Py)/(SS/RR))+1)) )
+#Scan parameters
+P = 20 # Power
+gw =108 # Groove width (um)
+ls = 9 # Line spacing (um)
+Px = 217 # Pitch in the x direction
+Py = 217 # Pitch in the y direction
+SS = 300000 # Scan speed (um/s)
+RR = 100000 # Rep rate (Hz)
+n=10 # Number of layers
+a = 23/2 # 1/e^2 beam radius
 
-P = 20
-res = 100
-gw =108
-ls = 9
-Px = 217
-Py = 217
-SS = 300000
-RR = 100000
-n=10
-a = 23/2
 I_0 = 2*(P/RR)/(np.pi*(a*10**-4)**2)
 
-read_image = False
+read_image = True # This controls whether or not the calculated cumulative fluence is compared to the depth profile of a real imaged pyramid
 if (read_image):
+    # If read_image is true, then you input an image with pyramids and then the code will calculate an "average unit cell"
     path = str(input("Enter the path to your image: ")).strip(' "')
     img, xycalibration, xy_unit, z_unit = open_image(path)
     fig, ax = plt.subplots()
@@ -31,7 +39,7 @@ if (read_image):
     plt.xlabel("x", fontsize=22)
     plt.ylabel("y", fontsize=22)
     plt.figtext(0.6, 0.5,
-                "*OPEN FULL-SCREEN*\nLeft-click on the bottom right trench\nof the first pyramid to be included\n(first meaning top left of pyramids included)\n\nLeft-click to place a point\nScroll to zoom\nRight-click and drag to pan\nRight-click to remove a point",
+                "*OPEN FULL-SCREEN*\nLeft-click on the center of a pyramid tip\n\nLeft-click to place a point\nScroll to zoom\nRight-click and drag to pan\nRight-click to remove a point",
                 fontsize=17, backgroundcolor='white')
     zoom_factory(ax)
     ph = panhandler(fig, button=3)
@@ -49,7 +57,7 @@ if (read_image):
     x_i = start[0]
     y_i = start[1]
 
-    px, py = get_pitch(img, xycalibration, xy_unit)
+    px, py, px_unc, py_unc = get_pitch(img, xycalibration, xy_unit)
 
     x = np.arange(0, img.shape[1], 1)
     x_og = xycalibration * x
@@ -107,7 +115,7 @@ if (read_image):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
 
-    plt.figure()
+    '''plt.figure()
     plt.contour(x[0:avg_pyramid.shape[0], 0:avg_pyramid.shape[1]], y[0:avg_pyramid.shape[0], 0:avg_pyramid.shape[1]],
                 avg_pyramid, colors='k')
     plt.contourf(x[0:avg_pyramid.shape[0], 0:avg_pyramid.shape[1]], y[0:avg_pyramid.shape[0], 0:avg_pyramid.shape[1]],
@@ -122,26 +130,20 @@ if (read_image):
            "Average Pyramid y cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
     errbar(np.linspace(0, (np.sqrt(2) * xycalibration * diagonal_cut.size), diagonal_cut.size, endpoint=False),
            diagonal_cut, diagonal_cut_unc, "Average Pyramid diagonal cross-section", "y (" + str(xy_unit) + ")",
-           "z (" + str(z_unit) + ")")
-
-    # extra analysis
-    '''plt.figure()
-    avg_params = np.array(avg_params)
-    plt.scatter((np.arange(0,avg_params.shape[0]) % cols),avg_params[:,0])
-    plt.title("Pyramid Height vs Pyramid Position", fontsize = 24)
-    plt.xlabel("Pyramid Number, From Left to Right", fontsize = 22)
-    plt.ylabel("Pyramid Height (" + z_unit +")", fontsize = 22)'''
-
-    plt.show()
+           "z (" + str(z_unit) + ")")'''
+    x = np.linspace(0, 1000 * px, depth.shape[0])
+    y = np.linspace(0, 1000 * py, depth.shape[1])
 
 else:
-    x = np.linspace(0,Px,res)
-    y = np.linspace(0,Py,res)
+    res = 2  # The resolution (in microns) of the lattice upon which you are evaluating the fluence
+    x = np.arange(0,Px,res)
+    y = np.arange(0,Py,res)
 
-    x,y = np.meshgrid(x,y)
 
+x,y = np.meshgrid(x,y)
 inv_f = (fluence_func(x,y,gw,ls,Px,Py,SS,RR,n,I_0,a))
 
+plt.figure()
 plt.imshow(inv_f, extent = (0,Px,Py,0),vmin = 0,vmax=22500,cmap="viridis_r")
 plt.colorbar(label = "J/cm^2")
 plt.title("Cumulative Fluence", fontsize=24)
@@ -150,7 +152,9 @@ plt.ylabel("y (um)", fontsize =22)
 plt.xticks(fontsize = 18)
 plt.yticks(fontsize = 18)
 
-inv_f = np.where(inv_f < -2,inv_f,0)
+# Extra stuff: smoothing and fitting fluence vs. depth
+'''inv_f = ndimage.gaussian_filter(inv_f, 30)
+slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(inv_f.flatten(), depth.flatten())'''
 
 plt.show()
 

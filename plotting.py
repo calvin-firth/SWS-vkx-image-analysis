@@ -1,4 +1,5 @@
-import numpy as np
+# Just some quick plotting functions to not have to rewrite all the code. Written by Calvin
+
 import matplotlib.pyplot as plt
 
 def scatter_plot(x, y, title= "", xlabel = "", ylabel = ""):

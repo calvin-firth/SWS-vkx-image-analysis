@@ -1,3 +1,5 @@
+#Literally just opens a file and displays the image.
+
 from image_helper import open_image
 import matplotlib.pyplot as plt
 

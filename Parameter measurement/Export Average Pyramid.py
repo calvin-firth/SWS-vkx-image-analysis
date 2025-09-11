@@ -1,3 +1,7 @@
+'''This code calculates the average pyramid from an image and exports it as a csv
+Written by Calvin Firth (UMN)
+Last updated Fall 2025'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 from plotting import errbar
