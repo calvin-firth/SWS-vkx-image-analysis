@@ -4,6 +4,7 @@ Once the analysis is done, the parameters are printed out and the average pyrami
 Written by Calvin Firth (UMN)
 Last updated Fall 2025'''
 
+import tabulate
 import matplotlib.pyplot as plt
 import numpy as np
 from plotting import errbar
@@ -98,10 +99,10 @@ x_i = start[0]
 y_i = start[1]
 
 if(partial):
-    print("The following pitch values are calculated based only on the cropped part of the input image: ")
+    print("\nThe following pitch values are calculated based only on the cropped part of the input image: ")
 
 else:
-    print("The following pitch values are calculated based on the *entire* input image: ")
+    print("\nThe following pitch values are calculated based on the *entire* input image: ")
 
 z_peak = False
 px,py,px_unc,py_unc = get_pitch(img,xycalibration,xy_unit,z_peak,300)
@@ -114,7 +115,7 @@ x, y = np.meshgrid(x_og, y_og)
 
 # More UI
 rect = plt.Rectangle((x_i,y_i),-(px/xycalibration),-(py/xycalibration),facecolor="none",edgecolor='k')
-print("For the following questions, refer to the figure if needed.")
+print("\nFor the following questions, refer to the figure if needed.")
 fig2,ax2 = plt.subplots()
 ax2.imshow(img)
 ax2.scatter(x_i,y_i, s=20,marker='*',c='k')
@@ -127,6 +128,7 @@ plt.show(block=False)
 plt.pause(0.2)
 rows = int(input("How many rows to stack? (Including start row, going downwards)"))
 cols = int(input("How many columns to stack? (Including start column, going rightwards)"))
+print("")
 init = (x_i,y_i)
 
 row_arr = []
@@ -176,29 +178,45 @@ plt.ylabel("y (" + xy_unit + ")", fontsize =22)
 
 parameters = get_params(avg_pyramid, x_og, y_og, plot = False)
 
-print("Parameters of the average pyramid: ")
-print("dx: " + str(parameters[0]) + " " + z_unit)
-print("dy: " + str(parameters[1])  + " " + z_unit)
-print("dt: " + str(parameters[2]) + " " + z_unit)
-print("average height: " + str(parameters[3]) + " " + z_unit)
-print("wx: " + str(parameters[4]) + " " + xy_unit)
-print("wy: " + str(parameters[5]) + " " + xy_unit)
+print("\nParameters of the average pyramid: ")
+print(f"dx: {parameters[0]:.3f} {z_unit}")
+print(f"dy: {parameters[1]:.3f} {z_unit}")
+print(f"dt: {parameters[2]:.3f} {z_unit}")
+print(f"average height: {parameters[3]:.3f} {z_unit}")
+print(f"wx: {parameters[4]:.3f} {xy_unit}")
+print(f"wy: {parameters[5]:.3f} {xy_unit}")
 
 params = np.nanmean(avg_params, axis = 0)
 param_unc = np.nanstd(avg_params, axis = 0)
+
+
+def format_val_unc(val, unc, sigfigs=2):
+    """Format value ± uncertainty with given sig figs for uncertainty."""
+    if unc == 0 or np.isnan(unc):
+        return f"{val:.6g} ± {unc:.6g}"
+
+    exp = int(np.floor(np.log10(abs(unc))))
+    unc_rounded = round(unc, -exp + (sigfigs - 1))
+    decimals = max(-int(np.floor(np.log10(unc_rounded))) + (sigfigs - 1), 0)
+    val_rounded = round(val, decimals)
+
+    return f"{val_rounded:.{decimals}f} ± {unc_rounded:.{decimals}f}"
+
 avg_dict = {
-    "dx": str(params[0]) + " +- " + str(param_unc[0]) + " " + z_unit,
-    "dy": str(params[1]) + " +- " + str(param_unc[1]) + " " + z_unit,
-    "dt": str(params[2]) + " +- " + str(param_unc[2]) + " " + z_unit,
-    "average height": str(params[3]) + " +- " + str(param_unc[3]) + " " + z_unit,
-    "wx": str(params[4]) + " +- " + str(param_unc[4]) + " " + xy_unit,
-    "wy": str(params[5]) + " +- " + str(param_unc[5]) + " " + xy_unit
+    f"px ({xy_unit})": format_val_unc(px,px_unc),
+    f"py ({xy_unit})": format_val_unc(py,py_unc),
+    "dx (" + z_unit+")": format_val_unc(params[0],param_unc[0]),
+    "dy (" + z_unit+")": format_val_unc(params[1],param_unc[1]),
+    "dt (" + z_unit+")": format_val_unc(params[2],param_unc[2]),
+    "average height (" + z_unit+")": format_val_unc(params[3],param_unc[3]),
+    "wx (" + xy_unit+")": format_val_unc(params[4],param_unc[4]),
+    "wy (" + xy_unit+")": format_val_unc(params[5],param_unc[5])
 }
 if offset:
-    avg_dict["Offset"] = (str(np.nanmean(plane_vals)) + " +- " + str(np.nanstd(plane_vals)) + " " + z_unit)
+    avg_dict["Offset (" + z_unit + ")"] = format_val_unc(np.nanmean(plane_vals),np.nanstd(plane_vals))
 
-print("Average parameters of the pyramids: ")
-print(avg_dict)
+print("\nAverage parameters of the pyramids: ")
+print(tabulate.tabulate([avg_dict],headers="keys",tablefmt='tsv'))
 
 errbar(np.linspace(0,(xycalibration*x_cut.size),x_cut.size, endpoint=False),x_cut,x_cut_unc,"Average Pyramid x cross-section", "x (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
 errbar(np.linspace(0,(xycalibration*y_cut.size),y_cut.size, endpoint=False),y_cut,y_cut_unc,"Average Pyramid y cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")

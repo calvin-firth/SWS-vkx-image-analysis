@@ -12,6 +12,18 @@ import pandas
 from mpl_point_clicker import clicker
 from mpl_interactions import zoom_factory, panhandler
 
+def format_val_unc(val, unc, sigfigs=2):
+    """Format value ± uncertainty with given sig figs for uncertainty."""
+    if unc == 0 or np.isnan(unc):
+        return f"{val:.6g} ± {unc:.6g}"
+
+    exp = int(np.floor(np.log10(abs(unc))))
+    unc_rounded = round(unc, -exp + (sigfigs - 1))
+    decimals = max(-int(np.floor(np.log10(unc_rounded))) + (sigfigs - 1), 0)
+    val_rounded = round(val, decimals)
+
+    return f"{val_rounded:.{decimals}f} ± {unc_rounded:.{decimals}f}"
+
 def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=False):
     '''This function extracts the pitch from an image
     the "target" argument is a guess for the pitch (in microns) to initialize the fitting routine.
@@ -175,8 +187,8 @@ def get_pitch(img,xycalibration, xyunit, zeropeak = False, target = 300,plot=Fal
     py = 1 / (fitted_modely.mean.value)
     py_unc = (y_unc) / (fitted_modely.mean.value ** 2)
 
-    print("px = " + str(px) + " +- " + str(px_unc) + " " + xyunit)
-    print("py = " + str(py) + " +- " + str(py_unc) + " " + xyunit)
+    print("px = " + format_val_unc(px,px_unc) + " " + xyunit)
+    print("py = " + format_val_unc(py,py_unc) + " " + xyunit)
     return px,py,px_unc,py_unc
 
 def open_image(path):
