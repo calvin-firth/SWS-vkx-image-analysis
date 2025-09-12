@@ -103,32 +103,7 @@ plt.title("Average Pyramid Contour Plot", fontsize = 24)
 plt.xlabel("x (" + xy_unit + ")", fontsize = 22)
 plt.ylabel("y (" + xy_unit + ")", fontsize =22)
 
-parameters = get_params(avg_pyramid, x_og, y_og, plot = True)
-
-print("Parameters of the average pyramid: ")
-print("dx: " + str(parameters[0]) + " " + z_unit)
-print("dy: " + str(parameters[1])  + " " + z_unit)
-print("dt: " + str(parameters[2]) + " " + z_unit)
-print("average height: " + str(parameters[3]) + " " + z_unit)
-print("wx: " + str(parameters[4]) + " " + xy_unit)
-print("wy: " + str(parameters[5]) + " " + xy_unit)
-
-params = np.nanmean(avg_params, axis = 0)
-param_unc = np.nanstd(avg_params, axis = 0)
-avg_dict = {
-    "dx": str(params[0]) + " +- " + str(param_unc[0]) + " " + z_unit,
-    "dy": str(params[1]) + " +- " + str(param_unc[1]) + " " + z_unit,
-    "dt": str(params[2]) + " +- " + str(param_unc[2]) + " " + z_unit,
-    "average height": str(params[3]) + " +- " + str(param_unc[3]) + " " + z_unit,
-    "wx": str(params[4]) + " +- " + str(param_unc[4]) + " " + xy_unit,
-    "wy": str(params[5]) + " +- " + str(param_unc[5]) + " " + xy_unit
-}
-print("Average parameters of the pyramids: ")
-print(avg_dict)
-
-errbar(np.linspace(0,(xycalibration*x_cut.size),x_cut.size, endpoint=False),x_cut,x_cut_unc,"Average Pyramid x cross-section", "x (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
-errbar(np.linspace(0,(xycalibration*y_cut.size),y_cut.size, endpoint=False),y_cut,y_cut_unc,"Average Pyramid y cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
-errbar(np.linspace(0,(np.sqrt(2)*xycalibration*diagonal_cut.size),diagonal_cut.size, endpoint=False),diagonal_cut,diagonal_cut_unc,"Average Pyramid diagonal cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
+parameters = get_params(avg_pyramid, x_og, y_og, plot = False)
 
 x = np.arange(-4, avg_pyramid.shape[1]+4, 1)
 x_og = xycalibration * x
@@ -138,10 +113,10 @@ x,y = np.meshgrid(x_og,y_og)
 
 x_csv = np.array((x*1000)[::2,::2])
 y_csv = np.array((y*1000)[::2,::2])
-z_csv = np.array((avg_pyramid*1000)[::2,::2])
+z_csv = np.array((avg_pyramid*1000)[::2,::2]) # The number after the two colons (ie ::n) decreases the density of points along that axis by a factor of n
 pad_val = np.min(z_csv)
-z_csv = np.pad(z_csv,(2,),constant_values = pad_val)
-#z_csv = np.reshape(z_csv,(int(np.sqrt(z_csv.size)),int(np.sqrt(z_csv.size))))
+z_csv = np.pad(z_csv,(2,),constant_values = pad_val) # Ring of "zeros" around the outer edge
+
 plt.figure()
 plt.imshow(z_csv)
 plt.show()
@@ -150,4 +125,6 @@ x_csv = x_csv.flatten()
 y_csv = y_csv.flatten()
 z_csv = z_csv.flatten()
 
-#Then export
+export = np.transpose(np.array([x_csv,y_csv,z_csv])) # This prepares an export format of x|y|z columns
+
+#np.savetxt("test.csv", export,delimiter = ',') # Save the csv

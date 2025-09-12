@@ -60,12 +60,10 @@ n = np.cross(v1,v2)
 ref_plane = -((n[0]/n[2])*x + (n[1]/n[2])*y) + ((n[0]*pt1[0])/n[2] + ((n[1]*pt1[1])/n[2]) + pt1[2])
 depth = ref_plane - img
 volume = np.sum(depth)*xycalibration*xycalibration
-print("Volume = " + str(volume) + " ("+ str(z_unit) + "*" + str(xy_unit) + "^2)")
+print(f"Volume = {volume:.4f} ({z_unit}*{xy_unit}^2)")
 
 x, y = np.meshgrid(x_og, y_og)
 
-#plt.figure()
-#plt.imshow(ref_plane)
 plt.figure()
 plt.imshow(img)
 plt.title("Original image")
