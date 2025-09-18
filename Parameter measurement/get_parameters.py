@@ -3,6 +3,10 @@ The input is an "image" of a single pyramid
 Written by Calvin Firth (UMN)
 Last edited fall 2025'''
 
+import sys, os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from plotting import line_plot

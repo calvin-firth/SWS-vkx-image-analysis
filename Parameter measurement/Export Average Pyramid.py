@@ -2,6 +2,10 @@
 Written by Calvin Firth (UMN)
 Last updated Fall 2025'''
 
+import sys, os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 import matplotlib.pyplot as plt
 import numpy as np
 from plotting import errbar

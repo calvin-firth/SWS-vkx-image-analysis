@@ -4,6 +4,10 @@ Once the analysis is done, the parameters are printed out and the average pyrami
 Written by Calvin Firth (UMN)
 Last updated Fall 2025'''
 
+import sys, os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 import tabulate
 import matplotlib.pyplot as plt
 import numpy as np
@@ -166,8 +170,6 @@ diagonal_cut = np.diagonal(avg_pyramid)
 diagonal_cut_unc = np.diagonal(avg_pyr_unc)
 
 plt.figure()
-print(avg_pyramid.shape[0])
-print(x_og[avg_pyramid.shape[0]])
 plt.imshow(avg_pyramid, extent = (0,x_og[avg_pyramid.shape[0]],y_og[avg_pyramid.shape[1]],0),interpolation='nearest')
 plt.title("Average Pyramid", fontsize = 24)
 plt.xlabel("x (" + xy_unit + ")", fontsize = 22)
@@ -220,8 +222,17 @@ avg_dict = {
 if offset:
     avg_dict["Offset (" + z_unit + ")"] = format_val_unc(np.nanmean(plane_vals),np.nanstd(plane_vals))
 
+headers = list(avg_dict.keys())
+vals = list(avg_dict.values())
+print(vals)
+
 print("\nAverage parameters of the pyramids: ")
-print(tabulate.tabulate([avg_dict],headers="keys",tablefmt='tsv'))
+print(tabulate.tabulate([vals],headers=headers,tablefmt='csv'))
+
+
+tsv_text = "\t".join(headers) + "\n" + "\t".join(vals)
+print("\nCopy-and-pasteable table string:")
+print(tsv_text)
 
 errbar(np.linspace(0,(xycalibration*x_cut.size),x_cut.size, endpoint=False),x_cut,x_cut_unc,"Average Pyramid x cross-section", "x (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")
 errbar(np.linspace(0,(xycalibration*y_cut.size),y_cut.size, endpoint=False),y_cut,y_cut_unc,"Average Pyramid y cross-section", "y (" + str(xy_unit) + ")", "z (" + str(z_unit) + ")")

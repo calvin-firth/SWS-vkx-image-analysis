@@ -2,6 +2,10 @@
 Written by Calvin Firth
 Last updated Spring 2025'''
 
+import sys, os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 from image_helper import open_image, partial_image
 import matplotlib.pyplot as plt
 from mpl_point_clicker import clicker
